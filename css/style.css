@@ -150,12 +150,20 @@ footer { text-align: center; color: #7e93a3; font-size: 10px; margin-top: 8px; m
 .power-badge.SSS { border-color: #ff3b3b; color: #ff8a8a; background: #ff3b3b18; box-shadow: 0 0 20px #ff3b3b30; animation: pulseSSS 1.5s infinite; }
 @keyframes pulseSSS { 0%,100% { box-shadow: 0 0 12px #ff3b3b30; } 50% { box-shadow: 0 0 22px #ff3b3b55; } }
 #history-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; max-height: none; overflow: visible; }
-.history-item { width: 100%; background: #010a13; border: 1px solid #253340; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; transition: all .2s; }
+.history-item { position: relative; width: 100%; background: #010a13; border: 1px solid #253340; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; transition: all .2s; }
 .history-item:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 4px 12px #c8aa6e20; }
 .history-item:active { transform: scale(.97); }
 .history-item img { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; border: 1px solid #26323d; }
 .history-item small { display: block; font-size: 10px; color: #a5b2bd; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 .history-item small:last-child { font-size: 8px; color: #5a6a7a; font-weight: 400; }
+.history-delete {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px; display: grid; place-items: center; padding: 0;
+  background: #010a13d9; border: 1px solid #344b59; border-radius: 5px;
+  color: #8796a4; font-size: 15px; line-height: 1; cursor: pointer;
+  transition: color .15s, border-color .15s, background-color .15s;
+}
+.history-delete:hover { color: #ff8a8a; border-color: #c21a1a; background: #201014; }
 #keyboard-hint { width: 100%; max-width: 620px; text-align: center; font-size: 10px; color: #5a6a7a; letter-spacing: .5px; }
 
 @media (max-width: 720px) {
