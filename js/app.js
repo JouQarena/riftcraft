@@ -41,7 +41,7 @@ let rollRandomizer = createBalancedRandomizer(RANDOM_RULES);
 
 function initHUD(){ initHUDPositions(); }
 initHUD();
-console.log('%cRiftcrafter v20260911d - HISTORY: NO DUPLICATE ENTRIES + PER-BUILD DELETE','color:#c8aa6e; font-size:14px; font-weight:bold;');
+console.log('%cRiftcrafter v20260911f - QUEUE-CANCEL STYLE REMOVE SFX','color:#c8aa6e; font-size:14px; font-weight:bold;');
 console.log('Build-meta exists:', !!document.getElementById('build-meta'), 'History grid:', getComputedStyle(document.getElementById('history-list')||{}).display);
 
 function notify(message, kind='info', actionLabel, onAction){
@@ -685,7 +685,7 @@ function renderHistory(){
     x.setAttribute('aria-label',`Remove ${model.champName} build from history`);
     x.onclick=(e)=>{
       e.stopPropagation();
-      soundManager.play('pick');
+      soundManager.play('remove');
       history.splice(index,1);
       saveHistory(history);
       renderHistory();

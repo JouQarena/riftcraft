@@ -75,7 +75,9 @@ h1 { font-size: clamp(24px, 4.2vw, 36px); font-weight: 800; letter-spacing: 8px;
 .button-cyan { color: #81d6e1; border-color: #2d6675; background: #0b2632; }
 .button-outline { color: var(--gold); border-color: #715d38; }
 .button-quiet { background: transparent; color: #a5b2bd; border-color: var(--line); }
-#roll-btn { width: 100%; max-width: 350px; text-transform: uppercase; font-size: 14px; letter-spacing: 2px; box-shadow: 0 0 25px #c8aa6e10; }
+#draft-controls { width: 100%; max-width: 620px; display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 10px; }
+#draft-controls #roll-btn { flex: 1 1 240px; max-width: 350px; width: auto; text-transform: uppercase; font-size: 14px; letter-spacing: 2px; box-shadow: 0 0 25px #c8aa6e10; }
+#draft-controls #play-again-btn { flex: 0 1 auto; }
 .build-area { width: 100%; margin-top: 4px; }
 .section-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 2px 11px; }
 .section-heading h2 { font-size: 11px; color: var(--gold); letter-spacing: 2px; font-weight: 650; }
@@ -105,7 +107,7 @@ h1 { font-size: clamp(24px, 4.2vw, 36px); font-weight: 800; letter-spacing: 8px;
 .ctag strong { font-size: 11px; color: #d8d1c1; }
 .ctag small { font-size: 9px; color: #8796a4; }
 .ctag .reroll-slot { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; display: grid; place-items: center; background: #010a13; border: 1px solid #344b59; border-radius: 4px; color: var(--gold); font-size: 10px; cursor: pointer; }
-#build-actions { width: 100%; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+#build-actions { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 #build-actions .button { min-width: 0; padding: 13px 9px; }
 #action-hint { text-align: center; font-size: 12px; color: #7e909f; margin-top: -7px; }
 #reroll-btn { width: 100%; margin-top: 2px; }

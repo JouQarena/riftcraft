@@ -4,7 +4,8 @@ const SOUND_FILES = {
   pick: ['sounds/pick.mp3', 'sounds/pick.wav'],
   complete: ['sounds/complete.mp3', 'sounds/complete.wav'],
   replay: ['sounds/replay.mp3', 'sounds/replay.wav'],
-  share: ['sounds/share.mp3', 'sounds/share.wav']
+  share: ['sounds/share.mp3', 'sounds/share.wav'],
+  remove: ['sounds/remove.wav?nocache=20260911f']
 };
 
 class SoundManager {
@@ -81,7 +82,7 @@ class SoundManager {
       gain.gain.linearRampToValueAtTime(0.3, now + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
       
-      const freqs = { roll: 400, pick: 800, complete: 600, replay: 300, share: 1000 };
+      const freqs = { roll: 400, pick: 800, complete: 600, replay: 300, share: 1000, remove: 300 };
       osc.frequency.setValueAtTime(freqs[name] || 500, now);
       if (name === 'roll') {
         osc.frequency.linearRampToValueAtTime(800, now + 0.8);
@@ -90,6 +91,9 @@ class SoundManager {
         osc.frequency.linearRampToValueAtTime(659, now + 0.2);
         osc.frequency.linearRampToValueAtTime(784, now + 0.4);
         osc.frequency.linearRampToValueAtTime(1046, now + 0.8);
+      } else if (name === 'remove') {
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(70, now + 0.35);
       }
       
       osc.start(now);

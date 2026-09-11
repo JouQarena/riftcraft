@@ -7,7 +7,7 @@
   <meta name="description" content="Riftcrafter — draft one impossible League of Legends champion from six different picks.">
   <title>Riftcrafter — League of Legends Draft</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23010a13'/%3E%3Cpath d='M18 14h28v36H18z' fill='none' stroke='%23c8aa6e' stroke-width='3'/%3E%3Ctext x='32' y='43' fill='%23c8aa6e' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700'%3ER%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css?v=20260911d">
+  <link rel="stylesheet" href="css/style.css?v=20260911e">
   <link rel="preconnect" href="https://ddragon.leagueoflegends.com" crossorigin>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -88,9 +88,14 @@
     <button id="clear-history-btn" type="button" class="button button-quiet">Clear History</button>
   </div>
 
-  <button id="roll-btn" type="button" class="button button-gold" disabled>
-    <svg class="icon" aria-hidden="true"><use href="#icon-dice"/></svg><span>Roll champion</span>
-  </button>
+  <div id="draft-controls">
+    <button id="roll-btn" type="button" class="button button-gold" disabled>
+      <svg class="icon" aria-hidden="true"><use href="#icon-dice"/></svg><span>Roll champion</span>
+    </button>
+    <button id="play-again-btn" type="button" class="button button-outline" disabled>
+      <svg class="icon" aria-hidden="true"><use href="#icon-restart"/></svg><span>Play again</span>
+    </button>
+  </div>
 
   <p id="keyboard-hint">Space/R = Roll • 1-6 = Pick slot • Z = Undo</p>
 
@@ -120,7 +125,6 @@
   </section>
 
   <div id="build-actions" role="group" aria-label="Build actions">
-    <button id="play-again-btn" type="button" class="button button-outline" disabled><svg class="icon" aria-hidden="true"><use href="#icon-restart"/></svg><span>Play again</span></button>
     <button id="copy-image-btn" type="button" class="button button-cyan" disabled><svg class="icon" aria-hidden="true"><use href="#icon-image"/></svg><span>Share image</span></button>
     <button id="share-link-btn" type="button" class="button button-cyan" disabled><svg class="icon" aria-hidden="true"><use href="#icon-link"/></svg><span>Share link</span></button>
     <button id="dl-btn" type="button" class="button button-quiet" disabled><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg><span>Download PNG</span></button>
@@ -146,7 +150,7 @@
   <footer>
     <p>A fan-made draft. Not an in-game mode or an official Riot Games product.</p>
     <p>Champion artwork and data via <a href="https://developer.riotgames.com/docs/lol/#data-dragon" target="_blank" rel="noopener noreferrer">Riot Data Dragon</a>.</p>
-    <p style="margin-top:8px; color:#c8aa6e; font-size:9px; letter-spacing:1px;">v20260911d</p>
+    <p style="margin-top:8px; color:#c8aa6e; font-size:9px; letter-spacing:1px;">v20260911f</p>
   </footer>
 </main>
 <div id="ability-tip" role="tooltip" hidden>
@@ -155,6 +159,6 @@
   <div class="tip-desc"></div>
 </div>
 
-<script type="module" src="js/app.js?v=20260911d"></script>
+<script type="module" src="js/app.js?v=20260911f"></script>
 </body>
 </html>
