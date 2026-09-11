@@ -41,7 +41,7 @@ let rollRandomizer = createBalancedRandomizer(RANDOM_RULES);
 
 function initHUD(){ initHUDPositions(); }
 initHUD();
-console.log('%cRiftcrafter v20260911f - QUEUE-CANCEL STYLE REMOVE SFX','color:#c8aa6e; font-size:14px; font-weight:bold;');
+console.log('%cRiftcrafter v20260911g - REAL BUILD POWER SCORING + VISUALS','color:#c8aa6e; font-size:14px; font-weight:bold;');
 console.log('Build-meta exists:', !!document.getElementById('build-meta'), 'History grid:', getComputedStyle(document.getElementById('history-list')||{}).display);
 
 function notify(message, kind='info', actionLabel, onAction){
@@ -592,75 +592,98 @@ async function shareLinkFn(){
 
 
 
+const MOBILE_CHAMPS=['kaisa',"kai'sa",'ezreal','yasuo','zed','katarina','vayne','lucian','kayn','leblanc','tristana','jax','leesin','renekton','akali','viktor','fiora','gnar'];
+const TROLL_CHAMPS=['teemo','shaco','yuumi'];
+const POWER_RX={
+  mobility:/(dash|leap|blink|tumble|vault|jump|charg|eject|slid|sweep|flick|swift|bolts)/,
+  cc:/(stun|root|knock|charm|fear|taunt|sleep|suppress|silence|blind|immobiliz|snare|restrain|bind|web|panic|net\b)/,
+  dmg:/(execut|true damage|lifesteal|on ?hit|burn|poison|bleed|damage)/,
+  troll:/(trap|stealth|invisib|disguise|\bward\b|ambush|gank)/
+};
 function powerScore(slots){
   try{
-    let mobility=0, cc=0, dmg=0, troll=0, synergy=0;
-    const all = Object.values(slots).filter(Boolean);
-    all.forEach(s=>{
-      const n=(s.abilityName||'').toLowerCase();
-      const champ=(s.champName||'').toLowerCase();
-      if(/(dash|leap|blink|tumble|vault|jump|dash|roll)/.test(n) || ['kaisa','ezreal','zed','yasuo','kayn','tristana','leblanc','lucian','vayne','katarina'].some(c=>champ.includes(c))) mobility+=2;
-      if(/(stun|root|knock|charm|fear|taunt|sleep|suppression|snare)/.test(n)) cc+=2;
-      if(/(execute|true damage|damage)/.test(n)) dmg+=1;
-      if(champ.includes('teemo') || champ.includes('shaco') || n.includes('trap') || champ.includes('yuumi')) troll+=2;
+    const stats={mobility:0,cc:0,dmg:0,troll:0,synergy:0};
+    const all=Object.values(slots).filter(Boolean);
+    if(!all.length) return {mobility:0,cc:0,dmg:0,troll:0,synergy:0,total:0,rank:'C'};
+    const textOf=it=>[it.abilityName,it.tip&&it.tip.desc].join(' ').toLowerCase();
+    const champOf=it=>(it.champName||'').toLowerCase();
+    all.forEach(it=>{
+      const t=textOf(it);
+      if(POWER_RX.mobility.test(t)) stats.mobility+=2;
+      if(POWER_RX.cc.test(t)) stats.cc+=2;
+      if(POWER_RX.dmg.test(t)) stats.dmg+=1;
+      if(POWER_RX.dmg.test(t)&&it.key==='r') stats.dmg+=1;
+      if(/execut/.test(t)) stats.dmg+=1;
+      if(TROLL_CHAMPS.some(x=>champOf(it).includes(x))) stats.troll+=3;
+      if(POWER_RX.troll.test(t)) stats.troll+=2;
     });
-    const abilityChamps=[slots.q, slots.w, slots.e].map(s=>s?.champId).filter(Boolean);
-    const uniq=new Set(abilityChamps).size;
-    if(uniq===1) synergy+=4;
-    else if(uniq===2) synergy+=2;
-    else synergy+=1;
-    // add some randomness but keep deterministic enough
-    mobility=Math.min(10, Math.max(1, mobility + Math.floor(Math.random()*3)));
-    cc=Math.min(10, Math.max(1, cc + Math.floor(Math.random()*3)));
-    dmg=Math.min(10, Math.max(2, 3 + Math.floor(Math.random()*6) + dmg));
-    troll=Math.min(10, troll + Math.floor(Math.random()*4));
-    synergy=Math.min(10, Math.max(1, synergy + Math.floor(Math.random()*2)));
-    const total=mobility+cc+dmg+troll+synergy;
+    const model=all.find(i=>i.key==='model');
+    if(model&&MOBILE_CHAMPS.some(x=>champOf(model).includes(x))) stats.mobility+=2;
+    // Synergy: how well the six stolen parts click (resource fit + troll team-up)
+    const parts=all.map(i=>(i.resourceType||'').trim().toLowerCase());
+    const modelType=parts[0];
+    if(modelType&&modelType!=='none'){
+      const sameAsModel=parts.slice(1).filter(p=>p===modelType).length;
+      stats.synergy+={5:4,4:3,3:2,2:1}[sameAsModel]||0;
+    }
+    const counts={};
+    parts.forEach(p=>{ if(p&&p!=='none') counts[p]=(counts[p]||0)+1; });
+    const clique=Object.keys(counts).length?Math.max(...Object.values(counts)):0;
+    stats.synergy+= clique>=5?3 : clique===4?2 : clique===3?1 : 0;
+    const trolls=all.filter(i=>TROLL_CHAMPS.some(x=>champOf(i).includes(x))).length;
+    stats.synergy+= trolls>=2?2 : trolls===1?1 : 0;
+    // A complete six-slot build is already a build — small foundation
+    stats.mobility+=2; stats.cc+=2; stats.dmg+=3; stats.troll+=1;
+    for(const k in stats) stats[k]=Math.min(10,Math.max(0,Math.round(stats[k])));
+    const total=stats.mobility+stats.cc+stats.dmg+stats.troll+stats.synergy;
     let rank='C';
-    if(total>18) rank='B';
-    if(total>23) rank='A';
-    if(total>28) rank='S';
-    if(total>33) rank='S+';
-    if(total>38) rank='SSS BROKEN';
-    return {mobility, cc, dmg, troll, synergy, total, rank};
+    if(total>=15) rank='B';
+    if(total>=22) rank='A';
+    if(total>=29) rank='S';
+    if(total>=36) rank='S+';
+    if(total>=43) rank='SSS BROKEN';
+    return {...stats,total,rank};
   }catch(e){
     console.error('powerScore error', e);
-    return {mobility:5, cc:5, dmg:5, troll:5, synergy:5, total:25, rank:'A'};
+    return {mobility:5,cc:5,dmg:5,troll:5,synergy:5,total:25,rank:'A'};
   }
 }
 function renderRating(){
   try{
-    const titleEl = document.getElementById('build-power-title');
-    const descEl = document.getElementById('build-power-desc');
-    if(!el.buildMeta || !el.buildPower) {
-      console.warn('buildMeta missing');
-      return;
-    }
-    if(!isComplete()){
-      el.buildMeta.classList.remove('show');
-      return;
-    }
+    const titleEl=document.getElementById('build-power-title');
+    const descEl=document.getElementById('build-power-desc');
+    if(!el.buildMeta || !el.buildPower) return;
+    if(!isComplete()){ el.buildMeta.classList.remove('show'); return; }
     const score=powerScore(state.slots);
     let rankClass='B';
     if(score.rank.includes('SSS')) rankClass='SSS';
     else if(score.rank.includes('S+')) rankClass='S';
     else if(score.rank.includes('S')) rankClass='S';
     else if(score.rank.includes('A')) rankClass='A';
-    else rankClass='B';
+    const fill=v=>`<i class="pfill" style="width:${Math.round(v*10)}%"></i>`;
     el.buildPower.innerHTML=`
-      <span class="power-badge rank ${rankClass}">★ RANK ${score.rank} ★</span>
-      <span class="power-badge">Mobility ${score.mobility}/10</span>
-      <span class="power-badge">CC ${score.cc}/10</span>
-      <span class="power-badge">DMG ${score.dmg}/10</span>
-      <span class="power-badge">Troll ${score.troll}/10</span>
-      <span class="power-badge">Synergy ${score.synergy}/10</span>
-    `;
-    if(titleEl) titleEl.textContent = `BUILD POWER — ${score.total}/50`;
-    if(descEl) descEl.textContent = score.rank==='SSS BROKEN' ? 'This build should be illegal. Absolutely broken.' : score.rank.includes('S') ? 'God-tier draft. Unstoppable.' : score.rank==='A' ? 'Strong synergy, very playable.' : 'Chaotic but fun!';
+      <div class="power-total-row">
+        <span class="power-score">${score.total}<small>/50</small></span>
+        <div class="power-track"><i style="width:${Math.round(score.total*2)}%"></i></div>
+      </div>
+      <div class="power-badges">
+        <span class="power-badge rank ${rankClass}">★ RANK ${score.rank} ★</span>
+        <span class="power-badge">Mobility ${score.mobility}/10${fill(score.mobility)}</span>
+        <span class="power-badge">CC ${score.cc}/10${fill(score.cc)}</span>
+        <span class="power-badge">DMG ${score.dmg}/10${fill(score.dmg)}</span>
+        <span class="power-badge">Troll ${score.troll}/10${fill(score.troll)}</span>
+        <span class="power-badge">Synergy ${score.synergy}/10${fill(score.synergy)}</span>
+      </div>`;
+    if(titleEl) titleEl.textContent='BUILD POWER';
+    if(descEl){
+      const RANK_DESC={'SSS BROKEN':'This build should be illegal. Absolutely broken.','S+':'God-tier draft. Unstoppable.','S':'Elite picks. The Rift fears you.','A':'Strong synergy, very playable.','B':'Chaotic but fun!','C':'A walk in the Rift... for your enemies.'};
+      let desc=RANK_DESC[score.rank]||RANK_DESC.B;
+      if(score.synergy>=8) desc+=' Six parts that actually click — the impossible champion holds together.';
+      else if(score.troll>=8) desc+=' Maximum troll energy detected.';
+      else if(score.mobility>=8) desc+=' Basically a pinball machine.';
+      descEl.textContent=desc;
+    }
     el.buildMeta.classList.add('show');
-    // force visible for debugging
-    el.buildMeta.style.display='block';
-    console.log('renderRating success', score);
   }catch(e){
     console.error('renderRating failed', e);
   }

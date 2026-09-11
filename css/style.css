@@ -142,9 +142,16 @@ footer { text-align: center; color: #7e93a3; font-size: 10px; margin-top: 8px; m
 #build-meta.show { display: block; animation: powerIn .4s ease; }
 @keyframes powerIn { from { opacity:0; transform: translateY(8px) scale(.98); } to { opacity:1; transform: translateY(0) scale(1); } }
 #build-power-title { font-size: 11px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; margin-bottom: 12px; font-weight: 700; }
-#build-power { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+#build-power { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.power-total-row { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 440px; }
+.power-score { font-size: 26px; font-weight: 800; color: var(--gold-bright); min-width: 84px; text-align: right; letter-spacing: 1px; }
+.power-score small { font-size: 11px; color: var(--muted); font-weight: 600; }
+.power-track { position: relative; flex: 1 1 auto; height: 8px; border-radius: 4px; background: #010a13; border: 1px solid #26323d; overflow: hidden; }
+.power-track i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #1a78c2, #45c6da 55%, #c8aa6e); transition: width .7s ease; }
+.power-badges { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.power-badge { position: relative; overflow: hidden; font-size: 11px; padding: 7px 14px; border-radius: 20px; border: 1px solid var(--line); color: #a5b2bd; background: #010a13; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
+.pfill { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: linear-gradient(90deg, #45c6da, #c8aa6e); transition: width .7s ease; }
 #build-power-desc { margin-top: 10px; font-size: 11px; color: #7e909f; }
-.power-badge { font-size: 11px; padding: 7px 14px; border-radius: 20px; border: 1px solid var(--line); color: #a5b2bd; background: #010a13; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
 .power-badge.rank { font-size: 14px; padding: 8px 18px; border-width: 1.5px; letter-spacing: 1.5px; }
 .power-badge.S { border-color: #c8aa6e; color: var(--gold-bright); background: linear-gradient(180deg,#c8aa6e22,#b2905222); box-shadow: 0 0 15px #c8aa6e25; }
 .power-badge.B { border-color: #45c6da; color: #81d6e1; }
