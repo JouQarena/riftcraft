@@ -41,7 +41,7 @@ let rollRandomizer = createBalancedRandomizer(RANDOM_RULES);
 
 function initHUD(){ initHUDPositions(); }
 initHUD();
-console.log('%cRiftcrafter v20260911c - GRID HISTORY + RANK FIX + NOCACHE','color:#c8aa6e; font-size:14px; font-weight:bold;');
+console.log('%cRiftcrafter v20260911d - HISTORY: NO DUPLICATE ENTRIES + PER-BUILD DELETE','color:#c8aa6e; font-size:14px; font-weight:bold;');
 console.log('Build-meta exists:', !!document.getElementById('build-meta'), 'History grid:', getComputedStyle(document.getElementById('history-list')||{}).display);
 
 function notify(message, kind='info', actionLabel, onAction){
@@ -477,14 +477,7 @@ function completeBuild(shared, skipHistory=false){
 async function openHistoryBuild(h){
   try{
     soundManager.play('pick');
-    // Bump to top as if just made
-    const bumped = { time: Date.now(), version: h.version, slots: h.slots };
-    const filtered = loadHistory().filter(x=>x.time!==h.time);
-    saveHistory(filtered);
-    pushHistory(bumped);
-    history = loadHistory();
-    renderHistory();
-    // Use hash system which is proven to work for shared builds
+    // Only open the build — do NOT rewrite history (no new "character" entry)
     const data={v:1,p:h.version,c:h.slots.map(s=>s.champId)};
     location.hash='build='+encodeBuildToken(data);
     // Force boot to restore immediately (bypass mid-draft warning)
@@ -676,15 +669,28 @@ function renderRating(){
 function renderHistory(){
   if(!history.length){ el.historyList.innerHTML=`<small style="color:#7e909f;">No history yet</small>`; return; }
   el.historyList.innerHTML='';
-  history.forEach(h=>{
+  history.forEach((h,index)=>{
+    const model=(h.slots||[]).find(s=>s.key==='model') || (h.slots||[])[0];
+    if(!model) return;
     const div=document.createElement('div'); div.className='history-item';
-    const model=h.slots.find(s=>s.key==='model');
     div.innerHTML=`<img src="${model.url}" alt=""><small>${model.champName}</small><small>${new Date(h.time).toLocaleTimeString()} • ${new Date(h.time).toLocaleDateString()}</small>`;
-    div.title=`Click to open ${model.champName} build as if just made`;
+    div.title=`Click to open ${model.champName} build`;
     div.onclick=()=>{
       soundManager.play('pick');
       openHistoryBuild(h);
     };
+    const x=document.createElement('button');
+    x.type='button'; x.className='history-delete'; x.textContent='×';
+    x.title='Remove this build from history';
+    x.setAttribute('aria-label',`Remove ${model.champName} build from history`);
+    x.onclick=(e)=>{
+      e.stopPropagation();
+      soundManager.play('pick');
+      history.splice(index,1);
+      saveHistory(history);
+      renderHistory();
+    };
+    div.appendChild(x);
     el.historyList.appendChild(div);
   });
 }
@@ -789,7 +795,8 @@ async function boot(){
       if(!current(token)) return;
       const byId=new Map(champions.map(champ=>[champ.id,champ]));
       KEYS.forEach((key,i)=>fillSlot(key,itemFor(byId.get(shared.c[i]),key,patch),token));
-      completeBuild(true);
+      // skipHistory: opening a shared/history build must NOT be recorded in history again
+      completeBuild(true, true);
     }else{
       state.phase='ready'; el.loading.hidden=true; el.card.hidden=false; syncControls();
     }
