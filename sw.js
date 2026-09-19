@@ -1,4 +1,4 @@
-// sw.js — Riftcrafter offline service worker  [manifest-fix 20260919b]
+// sw.js — Riftcrafter offline service worker  [two-page navigation 20260919c]
 // Once something is downloaded it stays saved: images are served from the
 // device cache forever and are NEVER re-downloaded behind the user's back.
 // Cache names are stable on purpose — updating the site must not wipe saved art.
@@ -7,7 +7,8 @@ const DATA_CACHE = 'riftcrafter-data-v1';
 
 // Everything the game needs to run offline (app shell).
 const APP_SHELL = [
-  './', './index.html',
+  './', './index.html', './champion-roll.html',
+  './css/page-switcher.css', './js/page-switcher.js',
   './css/style.css',
   './js/app.js', './js/storage.js', './js/share.js', './js/hud.js', './js/sounds.js', './js/randomizer.js',
   './public/frame.webp',
@@ -87,11 +88,19 @@ self.addEventListener('fetch', (event) => {
         try {
           const fresh = await fetch(request);
           const cache = await caches.open(APP_CACHE);
-          cache.put('./index.html', fresh.clone());
+          // Keep each page separate; the roll page must not replace the draft.
+          if(fresh.ok) await cache.put(url.pathname, fresh.clone());
           return fresh;
         } catch {
           const cache = await caches.open(APP_CACHE);
-          return (await cache.match('./index.html', { ignoreSearch: true })) || (await cache.match('./')) || Response.error();
+          const page = await cache.match(url.pathname, { ignoreSearch: true });
+          if(page) return page;
+          // Only the home URL may fall back to the original index page.
+          const home = new URL('./', self.registration.scope).pathname;
+          if(url.pathname === home || url.pathname === home + 'index.html') {
+            return (await cache.match('./index.html')) || (await cache.match('./')) || Response.error();
+          }
+          return Response.error();
         }
       })());
     } else {
