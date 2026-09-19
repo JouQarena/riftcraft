@@ -1,4 +1,4 @@
-// sw.js — Riftcrafter offline service worker
+// sw.js — Riftcrafter offline service worker  [manifest-fix 20260919b]
 // Once something is downloaded it stays saved: images are served from the
 // device cache forever and are NEVER re-downloaded behind the user's back.
 // Cache names are stable on purpose — updating the site must not wipe saved art.

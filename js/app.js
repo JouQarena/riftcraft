@@ -41,7 +41,7 @@ let rollRandomizer = createBalancedRandomizer(RANDOM_RULES);
 
 function initHUD(){ initHUDPositions(); }
 initHUD();
-console.log('%cRiftcrafter v20260919a - NO BULK PRECACHE + ALWAYS-ON INSTALL BUTTON','color:#c8aa6e; font-size:14px; font-weight:bold;');
+console.log('%cRiftcrafter v20260919b - MANIFEST PATHS FIXED (INSTALLABLE)','color:#c8aa6e; font-size:14px; font-weight:bold;');
 console.log('Build-meta exists:', !!document.getElementById('build-meta'), 'History grid:', getComputedStyle(document.getElementById('history-list')||{}).display);
 
 function notify(message, kind='info', actionLabel, onAction){
