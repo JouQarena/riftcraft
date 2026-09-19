@@ -925,7 +925,6 @@ window.addEventListener('hashchange', ()=>{
 });
 
 boot();
-ot();
 
 // ================= OFFLINE APP (PWA INSTALL + DOWNLOAD PANEL) =================
 (function initOfflineInstaller(){
@@ -934,7 +933,9 @@ ot();
     window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
   }
   const d={
-    deferred:null,
+    deferred:window.__riftInstall||null,
+    installed:false,
+    prompting:false,
     help:document.getElementById('dl-help'),
     hint:document.getElementById('dl-hint'),
     installBtn:document.getElementById('install-btn'),
@@ -972,7 +973,7 @@ ot();
     d.help.scrollIntoView({behavior:'smooth', block:'nearest'});
   }
   function refresh(){
-    if(isStandalone()){
+    if(d.installed||isStandalone()){
       d.installBtn.hidden=true;
       d.hint.textContent='Installed ✓ Riftcrafter now runs offline — open it from your home screen / Start menu.';
       return;
@@ -985,15 +986,28 @@ ot();
         : 'If one-click install doesn’t pop up here, use your browser menu → “Install app” / “Add to Home screen” (steps below).';
   }
   window.addEventListener('riftinstallprompt', ()=>{ d.deferred=window.__riftInstall||null; refresh(); });
-  window.addEventListener('appinstalled', ()=>{ d.deferred=null; refresh(); });
+  window.addEventListener('appinstalled', ()=>{
+    d.installed=true; d.deferred=null; window.__riftInstall=null; refresh();
+  });
   d.installBtn.addEventListener('click', async ()=>{
-    if(d.deferred){
-      d.deferred.prompt();
-      try{ const {outcome}=await d.deferred.userChoice; if(outcome==='accepted') soundManager.play('complete'); }catch{}
-      d.deferred=null; refresh();
+    if(d.prompting||d.installed||isStandalone()) return;
+    const prompt=d.deferred;
+    if(prompt){
+      // A native prompt can only be used once; keep a local reference while awaiting it.
+      d.deferred=null; window.__riftInstall=null; d.prompting=true;
+      d.installBtn.disabled=true;
+      try{
+        await prompt.prompt();
+        const {outcome}=await prompt.userChoice;
+        if(outcome==='accepted') soundManager.play('complete');
+      }catch{
+        showHelp(platform());
+      }finally{
+        d.prompting=false; d.installBtn.disabled=false; refresh();
+      }
       return;
     }
-    showHelp(platform()==='ios' ? 'ios' : platform());
+    showHelp(platform());
   });
   d.androidBtn.addEventListener('click', ()=>showHelp('android'));
   d.iosBtn.addEventListener('click', ()=>showHelp('ios'));
