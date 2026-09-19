@@ -41,7 +41,7 @@ let rollRandomizer = createBalancedRandomizer(RANDOM_RULES);
 
 function initHUD(){ initHUDPositions(); }
 initHUD();
-console.log('%cRiftcrafter v20260918b - IMAGES SAVED FOREVER + BACKGROUND PRECACHE','color:#c8aa6e; font-size:14px; font-weight:bold;');
+console.log('%cRiftcrafter v20260918c - OFFLINE RECOVERY FROM SAVED DATA','color:#c8aa6e; font-size:14px; font-weight:bold;');
 console.log('Build-meta exists:', !!document.getElementById('build-meta'), 'History grid:', getComputedStyle(document.getElementById('history-list')||{}).display);
 
 function notify(message, kind='info', actionLabel, onAction){
@@ -762,6 +762,44 @@ function setupKeyboard(){
   });
 }
 
+// --- Offline recovery: if loading fails, play from the data saved on the device ---
+async function findCachedRoster(){
+  if(!('caches' in window)) return null;
+  const names=await caches.keys();
+  const found=[];
+  for(const name of names){
+    let cache;
+    try{ cache=await caches.open(name); }catch(_){ continue; }
+    let keys=[];
+    try{ keys=await cache.keys(); }catch(_){ continue; }
+    keys.forEach(k=>{
+      const m=String(k.url).match(/\/cdn\/([\d.]+)\/data\/en_US\/champion\.json$/);
+      if(m) found.push({cache, url:k.url, patch:m[1]});
+    });
+  }
+  found.sort((a,b)=>b.patch.localeCompare(a.patch, undefined, {numeric:true}));
+  for(const entry of found){
+    try{
+      const r=await entry.cache.match(entry.url);
+      if(!r) continue;
+      const data=await r.json();
+      if(data && data.data && Object.keys(data.data).length>=50) return {patch:entry.patch, roster:data.data};
+    }catch(_){}
+  }
+  return null;
+}
+async function loadFailMessage(){
+  if(!navigator.onLine) return 'You are offline and there is no saved data on this device yet. Open the app once with internet — after that it works fully offline.';
+  try{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(), 5000);
+    const probe=await fetch(CDN+'/api/versions.json',{cache:'no-store', mode:'cors', signal:controller.signal}).then(r=>r.ok).catch(()=>false);
+    clearTimeout(timer);
+    if(probe) return 'Riot’s Data Dragon didn’t respond correctly. It usually works — press Retry in a moment.';
+    return 'No internet (you may be connected to Wi-Fi without actual access). Reconnect and retry.';
+  }catch(_){ return 'No internet (you may be connected to Wi-Fi without actual access). Reconnect and retry.'; }
+}
+
 async function boot(){
   const token=resetRound('loading');
   el.loading.hidden=false; el.card.hidden=true; el.retry.hidden=true; el.fresh.hidden=true;
@@ -826,9 +864,20 @@ async function boot(){
     }
   }catch(_){
     if(!current(token)) return;
+    // Second chance: play from the data already saved on this device
+    if(!shared){
+      const saved=await findCachedRoster().catch(()=>null);
+      if(saved && current(token)){
+        state.version=saved.patch; state.roster=saved.roster; state.ids=Object.keys(saved.roster);
+        scheduleWarm();
+        state.phase='ready'; el.loading.hidden=true; el.card.hidden=false; syncControls();
+        notify('You are offline — playing with the champion data saved on this device.','warning');
+        return;
+      }
+    }
     state.phase='error'; el.loading.hidden=false; el.card.hidden=true;
     el.loading.querySelector('.spinner').hidden=true; el.retry.hidden=false; el.fresh.hidden=!shared;
-    el.loadText.textContent= !navigator.onLine ? 'You are offline. Open the app once with internet so it saves everything — then it works fully offline.' : shared ? 'This shared build couldn’t load. Check your connection and retry.' : 'Champion data couldn’t load. Check your internet connection and retry.';
+    el.loadText.textContent= shared ? 'This shared build couldn’t load. Check your connection and retry.' : await loadFailMessage();
     syncControls();
   }
 }
