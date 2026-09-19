@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#010a13">
   <meta name="description" content="Riftcrafter — draft one impossible League of Legends champion from six different picks.">
+  <script>
+    // capture the native install prompt as early as possible (module scripts run later)
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault();
+      window.__riftInstall = e;
+      window.dispatchEvent(new CustomEvent('riftinstallprompt'));
+    });
+  </script>
   <title>Riftcrafter — League of Legends Draft</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23010a13'/%3E%3Cpath d='M18 14h28v36H18z' fill='none' stroke='%23c8aa6e' stroke-width='3'/%3E%3Ctext x='32' y='43' fill='%23c8aa6e' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700'%3ER%3C/text%3E%3C/svg%3E">
   <link rel="manifest" href="public/manifest.webmanifest">
@@ -13,7 +21,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Riftcrafter">
-  <link rel="stylesheet" href="css/style.css?v=20260918c">
+  <link rel="stylesheet" href="css/style.css?v=20260919a">
   <link rel="preconnect" href="https://ddragon.leagueoflegends.com" crossorigin>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -167,12 +175,11 @@
     </div>
     <div id="dl-help" hidden></div>
     <p id="dl-offline-badge">Works offline — airplane mode friendly</p>
-    <p id="dl-warm"></p>
   </section>
   <footer>
     <p>A fan-made draft. Not an in-game mode or an official Riot Games product.</p>
     <p>Champion artwork and data via <a href="https://developer.riotgames.com/docs/lol/#data-dragon" target="_blank" rel="noopener noreferrer">Riot Data Dragon</a>.</p>
-    <p style="margin-top:8px; color:#c8aa6e; font-size:9px; letter-spacing:1px;">v20260918c</p>
+    <p style="margin-top:8px; color:#c8aa6e; font-size:9px; letter-spacing:1px;">v20260919a</p>
   </footer>
 </main>
 <div id="ability-tip" role="tooltip" hidden>
@@ -181,6 +188,6 @@
   <div class="tip-desc"></div>
 </div>
 
-<script type="module" src="js/app.js?v=20260918c"></script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3d84eefd8d41f90',t:'MTc4OTgxNzk1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script type="module" src="js/app.js?v=20260919a"></script>
+</body>
 </html>

@@ -187,7 +187,6 @@ footer { text-align: center; color: #7e93a3; font-size: 10px; margin-top: 8px; m
 #dl-help kbd { background: #101f34; border: 1px solid #344b59; border-radius: 4px; padding: 1px 6px; font-size: 11px; color: var(--gold); }
 #dl-offline-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 10px; letter-spacing: 1px; color: #7fd4e0; text-transform: uppercase; }
 #dl-offline-badge::before { content: '●'; color: #1d8f45; }
-#dl-warm { margin: 6px auto 0; font-size: 10px; letter-spacing: .5px; color: #8796a4; min-height: 14px; }
 
 @media (max-width: 720px) {
   #champ-tags { grid-template-columns: repeat(3, minmax(0, 1fr)); }

@@ -41,7 +41,7 @@ let rollRandomizer = createBalancedRandomizer(RANDOM_RULES);
 
 function initHUD(){ initHUDPositions(); }
 initHUD();
-console.log('%cRiftcrafter v20260918c - OFFLINE RECOVERY FROM SAVED DATA','color:#c8aa6e; font-size:14px; font-weight:bold;');
+console.log('%cRiftcrafter v20260919a - NO BULK PRECACHE + ALWAYS-ON INSTALL BUTTON','color:#c8aa6e; font-size:14px; font-weight:bold;');
 console.log('Build-meta exists:', !!document.getElementById('build-meta'), 'History grid:', getComputedStyle(document.getElementById('history-list')||{}).display);
 
 function notify(message, kind='info', actionLabel, onAction){
@@ -812,7 +812,6 @@ async function boot(){
     const roster=await getRoster(patch);
     if(!current(token)) return;
     state.version=patch; state.roster=roster; state.ids=Object.keys(roster);
-    scheduleWarm();
 
     const savedDraft = !shared ? loadDraft() : null;
     if(savedDraft && savedDraft.version===patch && savedDraft.slots){
@@ -869,7 +868,6 @@ async function boot(){
       const saved=await findCachedRoster().catch(()=>null);
       if(saved && current(token)){
         state.version=saved.patch; state.roster=saved.roster; state.ids=Object.keys(saved.roster);
-        scheduleWarm();
         state.phase='ready'; el.loading.hidden=true; el.card.hidden=false; syncControls();
         notify('You are offline — playing with the champion data saved on this device.','warning');
         return;
@@ -929,65 +927,6 @@ window.addEventListener('hashchange', ()=>{
 boot();
 ot();
 
-// ================= OFFLINE IMAGE PERSISTENCE =================
-// Downloads every champion's art + data ONCE in the background. After that
-// the service worker serves everything from the device — reopening the game
-// never re-downloads a single image.
-const WARM_KEY='riftcrafter_art_saved';
-const WARM_CACHE='riftcrafter-data-v1'; // must match sw.js DATA_CACHE
-let warmStarted=false;
-function scheduleWarm(){
-  if(warmStarted) return; warmStarted=true;
-  setTimeout(()=>{ warmChampionContent().catch(()=>{}); }, 3000);
-}
-async function warmChampionContent(){
-  try{
-    if(!('caches' in window)) return;
-    if(navigator.connection && navigator.connection.saveData) return;
-    const patch=state.version;
-    const ids=state.ids && state.ids.length ? state.ids.slice() : [];
-    if(!patch || ids.length<50) return;
-    const warmEl=document.getElementById('dl-warm');
-    if(localStorage.getItem(WARM_KEY)===patch){
-      if(warmEl) warmEl.textContent='All champion art saved on this device ✓';
-      return;
-    }
-    const cache=await caches.open(WARM_CACHE);
-    let done=0, failed=0;
-    const set=()=>{ if(warmEl) warmEl.textContent = done<ids.length ? `Saving champion art for offline… ${done}/${ids.length}` : 'All champion art saved ✓ — next visits open with zero downloads'; };
-    set();
-    let index=0;
-    async function worker(){
-      while(index<ids.length){
-        const id=ids[index++];
-        try{
-          const jUrl=CDN+'/cdn/'+patch+'/data/en_US/champion/'+encodeURIComponent(id)+'.json';
-          let champ=null;
-          try{
-            const jr=await fetch(jUrl,{mode:'cors'});
-            if(jr.ok){ await cache.put(jUrl, jr.clone()); champ=(await jr.json()).data[id]; }
-          }catch(_){}
-          const urls=[modelURL(id,patch)];
-          if(champ){
-            urls.push(imageURL('passive', champ.passive.image.full, patch));
-            champ.spells.forEach(s=>urls.push(imageURL('spell', s.image.full, patch)));
-          }
-          for(const u of urls){
-            try{
-              if(await cache.match(u)) continue;
-              const r=await fetch(u,{mode:'cors'});
-              if(r.ok) await cache.put(u, r.clone());
-            }catch(_){ failed++; }
-          }
-        }catch(_){ failed++; }
-        done++; set();
-      }
-    }
-    await Promise.all(Array.from({length:6}, worker));
-    if(failed < ids.length*3) localStorage.setItem(WARM_KEY, patch);
-  }catch(_){}
-}
-
 // ================= OFFLINE APP (PWA INSTALL + DOWNLOAD PANEL) =================
 (function initOfflineInstaller(){
   // Service worker: caches app + champions so the game runs with zero internet
@@ -1038,17 +977,23 @@ async function warmChampionContent(){
       d.hint.textContent='Installed ✓ Riftcrafter now runs offline — open it from your home screen / Start menu.';
       return;
     }
-    d.installBtn.hidden=!d.deferred;
-    if(d.deferred) d.hint.textContent='One click and it is installed on this device — then it works offline forever.';
-    else if(platform()==='ios') d.hint.textContent='On iPhone use the Share button in Safari → Add to Home Screen (steps below).';
+    d.installBtn.hidden=false;
+    d.hint.textContent = d.deferred
+      ? 'One click and it is installed on this device — then it works offline forever.'
+      : platform()==='ios'
+        ? 'On iPhone use the Share button in Safari → Add to Home Screen (steps below).'
+        : 'If one-click install doesn’t pop up here, use your browser menu → “Install app” / “Add to Home screen” (steps below).';
   }
-  window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); d.deferred=e; refresh(); });
+  window.addEventListener('riftinstallprompt', ()=>{ d.deferred=window.__riftInstall||null; refresh(); });
   window.addEventListener('appinstalled', ()=>{ d.deferred=null; refresh(); });
   d.installBtn.addEventListener('click', async ()=>{
-    if(!d.deferred) return;
-    d.deferred.prompt();
-    try{ const {outcome}=await d.deferred.userChoice; if(outcome==='accepted') soundManager.play('complete'); }catch{}
-    d.deferred=null; refresh();
+    if(d.deferred){
+      d.deferred.prompt();
+      try{ const {outcome}=await d.deferred.userChoice; if(outcome==='accepted') soundManager.play('complete'); }catch{}
+      d.deferred=null; refresh();
+      return;
+    }
+    showHelp(platform()==='ios' ? 'ios' : platform());
   });
   d.androidBtn.addEventListener('click', ()=>showHelp('android'));
   d.iosBtn.addEventListener('click', ()=>showHelp('ios'));
