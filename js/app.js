@@ -244,6 +244,8 @@ function makeFallback(label){
   ctx.fillText(label,32,32); return canvas.toDataURL('image/png');
 }
 function previewImage(image,src,label,alt){
+  // Previews and exported slots must use the same CORS-safe image cache.
+  image.crossOrigin='anonymous';
   image.alt=alt;
   image.onerror=()=>{
     if(image.src!==src) return;

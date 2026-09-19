@@ -1,6 +1,6 @@
-// sw.js — Riftcrafter offline service worker  [two-page navigation 20260919c]
+// sw.js — Riftcrafter offline service worker  [CORS artwork cache repair 20260920]
 // Once something is downloaded it stays saved: images are served from the
-// device cache forever and are NEVER re-downloaded behind the user's back.
+// device cache. Legacy opaque entries are repaired on demand for CORS images.
 // Cache names are stable on purpose — updating the site must not wipe saved art.
 const APP_CACHE = 'riftcrafter-app-v1';
 const DATA_CACHE = 'riftcrafter-data-v1';
@@ -42,21 +42,28 @@ self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// Pure cache-first: if we have it, it comes from the device. No background
-// re-fetch for images (they are patch-pinned and immutable), so nothing that
-// was already downloaded is ever downloaded again.
+// Cache-first: keep usable saved artwork without background downloads.
+// Old previews used no-cors, creating opaque responses that cannot be served
+// to crossorigin="anonymous" images used by the PNG exporter. Repair only
+// those incompatible entries; leave valid saved artwork untouched.
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   const exact = await cache.match(request);
-  if (exact) return exact;
+  const compatible = (response) => response &&
+    (response.type !== 'opaque' || request.mode === 'no-cors');
+  if (compatible(exact)) return exact;
   try {
-    const response = await fetch(request);
-    if (response && (response.ok || response.type === 'opaque')) cache.put(request, response.clone());
+    // Bypass the HTTP cache too when replacing an old opaque entry.
+    const response = await fetch(exact ? new Request(request, { cache: 'reload' }) : request);
+    if (response && (response.ok || response.type === 'opaque')) {
+      // Cache quota/storage errors must not discard an otherwise usable image.
+      await cache.put(request, response.clone()).catch(() => {});
+    }
     return response;
   } catch (err) {
     // offline and not saved yet: fall back to whatever close match exists
     const loose = await cache.match(request, { ignoreSearch: true, ignoreVary: true });
-    if (loose) return loose;
+    if (compatible(loose)) return loose;
     throw err;
   }
 }
