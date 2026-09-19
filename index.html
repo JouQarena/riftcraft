@@ -7,7 +7,13 @@
   <meta name="description" content="Riftcrafter — draft one impossible League of Legends champion from six different picks.">
   <title>Riftcrafter — League of Legends Draft</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23010a13'/%3E%3Cpath d='M18 14h28v36H18z' fill='none' stroke='%23c8aa6e' stroke-width='3'/%3E%3Ctext x='32' y='43' fill='%23c8aa6e' text-anchor='middle' font-family='Arial' font-size='30' font-weight='700'%3ER%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css?v=20260911e">
+  <link rel="manifest" href="public/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="public/icon-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Riftcrafter">
+  <link rel="stylesheet" href="css/style.css?v=20260918b">
   <link rel="preconnect" href="https://ddragon.leagueoflegends.com" crossorigin>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -24,6 +30,9 @@
   <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
   <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
   <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 14v3"/></symbol>
+  <symbol id="icon-share" viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></symbol>
+  <symbol id="icon-android" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="m8.5 8-2-3.2M15.5 8l2-3.2M9 13h.01M15 13h.01M2.5 12v4M21.5 12v4"/></symbol>
+  <symbol id="icon-windows" viewBox="0 0 24 24"><path d="M3.5 5.8 10.5 4.7v6.8h-7zM12.5 4.4 20.5 3.2v8.3h-8zM3.5 12.5h7v6.8l-7-1.1zM12.5 12.5h8v8.3l-8-1.2z"/></symbol>
 </svg>
 
 <main id="app">
@@ -147,10 +156,23 @@
     <button id="notice-action" type="button" class="button button-cyan" hidden></button>
   </div>
 
+  <section id="download-panel" aria-label="Download Riftcrafter">
+    <h3>Download — Play Offline</h3>
+    <p id="dl-hint">Install Riftcrafter as a real app on Android, iPhone/iPad, or Windows — after the first online visit it runs with no internet at all.</p>
+    <div class="dl-buttons">
+      <button id="install-btn" type="button" class="button button-gold" hidden><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg><span>Install app</span></button>
+      <button id="dl-android-btn" type="button" class="button button-cyan"><svg class="icon" aria-hidden="true"><use href="#icon-android"/></svg><span>Android</span></button>
+      <button id="dl-ios-btn" type="button" class="button button-cyan"><svg class="icon" aria-hidden="true"><use href="#icon-share"/></svg><span>iPhone / iPad</span></button>
+      <button id="dl-windows-btn" type="button" class="button button-cyan"><svg class="icon" aria-hidden="true"><use href="#icon-windows"/></svg><span>Windows</span></button>
+    </div>
+    <div id="dl-help" hidden></div>
+    <p id="dl-offline-badge">Works offline — airplane mode friendly</p>
+    <p id="dl-warm"></p>
+  </section>
   <footer>
     <p>A fan-made draft. Not an in-game mode or an official Riot Games product.</p>
     <p>Champion artwork and data via <a href="https://developer.riotgames.com/docs/lol/#data-dragon" target="_blank" rel="noopener noreferrer">Riot Data Dragon</a>.</p>
-    <p style="margin-top:8px; color:#c8aa6e; font-size:9px; letter-spacing:1px;">v20260911g</p>
+    <p style="margin-top:8px; color:#c8aa6e; font-size:9px; letter-spacing:1px;">v20260918b</p>
   </footer>
 </main>
 <div id="ability-tip" role="tooltip" hidden>
@@ -159,6 +181,6 @@
   <div class="tip-desc"></div>
 </div>
 
-<script type="module" src="js/app.js?v=20260911g"></script>
+<script type="module" src="js/app.js?v=20260918b"></script>
 </body>
 </html>

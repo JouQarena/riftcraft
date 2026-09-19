@@ -41,7 +41,7 @@ let rollRandomizer = createBalancedRandomizer(RANDOM_RULES);
 
 function initHUD(){ initHUDPositions(); }
 initHUD();
-console.log('%cRiftcrafter v20260911g - REAL BUILD POWER SCORING + VISUALS','color:#c8aa6e; font-size:14px; font-weight:bold;');
+console.log('%cRiftcrafter v20260918b - IMAGES SAVED FOREVER + BACKGROUND PRECACHE','color:#c8aa6e; font-size:14px; font-weight:bold;');
 console.log('Build-meta exists:', !!document.getElementById('build-meta'), 'History grid:', getComputedStyle(document.getElementById('history-list')||{}).display);
 
 function notify(message, kind='info', actionLabel, onAction){
@@ -611,7 +611,7 @@ function powerScore(slots){
       const t=textOf(it);
       if(POWER_RX.mobility.test(t)) stats.mobility+=2;
       if(POWER_RX.cc.test(t)) stats.cc+=2;
-      if(POWER_RX.dmg.test(t)) stats.dmg+=1;
+      if(POWER_RX.dmg.test(t)) stats.dmg+=2;
       if(POWER_RX.dmg.test(t)&&it.key==='r') stats.dmg+=1;
       if(/execut/.test(t)) stats.dmg+=1;
       if(TROLL_CHAMPS.some(x=>champOf(it).includes(x))) stats.troll+=3;
@@ -633,15 +633,15 @@ function powerScore(slots){
     const trolls=all.filter(i=>TROLL_CHAMPS.some(x=>champOf(i).includes(x))).length;
     stats.synergy+= trolls>=2?2 : trolls===1?1 : 0;
     // A complete six-slot build is already a build — small foundation
-    stats.mobility+=2; stats.cc+=2; stats.dmg+=3; stats.troll+=1;
+    stats.mobility+=3; stats.cc+=3; stats.dmg+=4; stats.troll+=2;
     for(const k in stats) stats[k]=Math.min(10,Math.max(0,Math.round(stats[k])));
     const total=stats.mobility+stats.cc+stats.dmg+stats.troll+stats.synergy;
     let rank='C';
-    if(total>=15) rank='B';
-    if(total>=22) rank='A';
-    if(total>=29) rank='S';
-    if(total>=36) rank='S+';
-    if(total>=43) rank='SSS BROKEN';
+    if(total>=22) rank='B';
+    if(total>=26) rank='A';
+    if(total>=30) rank='S';
+    if(total>=33) rank='S+';
+    if(total>=36) rank='SSS BROKEN';
     return {...stats,total,rank};
   }catch(e){
     console.error('powerScore error', e);
@@ -774,6 +774,7 @@ async function boot(){
     const roster=await getRoster(patch);
     if(!current(token)) return;
     state.version=patch; state.roster=roster; state.ids=Object.keys(roster);
+    scheduleWarm();
 
     const savedDraft = !shared ? loadDraft() : null;
     if(savedDraft && savedDraft.version===patch && savedDraft.slots){
@@ -827,7 +828,7 @@ async function boot(){
     if(!current(token)) return;
     state.phase='error'; el.loading.hidden=false; el.card.hidden=true;
     el.loading.querySelector('.spinner').hidden=true; el.retry.hidden=false; el.fresh.hidden=!shared;
-    el.loadText.textContent= shared ? 'This shared build couldn’t load. Check your connection and retry.' : 'Champion data couldn’t load. Check your internet connection and retry.';
+    el.loadText.textContent= !navigator.onLine ? 'You are offline. Open the app once with internet so it saves everything — then it works fully offline.' : shared ? 'This shared build couldn’t load. Check your connection and retry.' : 'Champion data couldn’t load. Check your internet connection and retry.';
     syncControls();
   }
 }
@@ -877,3 +878,131 @@ window.addEventListener('hashchange', ()=>{
 });
 
 boot();
+ot();
+
+// ================= OFFLINE IMAGE PERSISTENCE =================
+// Downloads every champion's art + data ONCE in the background. After that
+// the service worker serves everything from the device — reopening the game
+// never re-downloads a single image.
+const WARM_KEY='riftcrafter_art_saved';
+const WARM_CACHE='riftcrafter-data-v1'; // must match sw.js DATA_CACHE
+let warmStarted=false;
+function scheduleWarm(){
+  if(warmStarted) return; warmStarted=true;
+  setTimeout(()=>{ warmChampionContent().catch(()=>{}); }, 3000);
+}
+async function warmChampionContent(){
+  try{
+    if(!('caches' in window)) return;
+    if(navigator.connection && navigator.connection.saveData) return;
+    const patch=state.version;
+    const ids=state.ids && state.ids.length ? state.ids.slice() : [];
+    if(!patch || ids.length<50) return;
+    const warmEl=document.getElementById('dl-warm');
+    if(localStorage.getItem(WARM_KEY)===patch){
+      if(warmEl) warmEl.textContent='All champion art saved on this device ✓';
+      return;
+    }
+    const cache=await caches.open(WARM_CACHE);
+    let done=0, failed=0;
+    const set=()=>{ if(warmEl) warmEl.textContent = done<ids.length ? `Saving champion art for offline… ${done}/${ids.length}` : 'All champion art saved ✓ — next visits open with zero downloads'; };
+    set();
+    let index=0;
+    async function worker(){
+      while(index<ids.length){
+        const id=ids[index++];
+        try{
+          const jUrl=CDN+'/cdn/'+patch+'/data/en_US/champion/'+encodeURIComponent(id)+'.json';
+          let champ=null;
+          try{
+            const jr=await fetch(jUrl,{mode:'cors'});
+            if(jr.ok){ await cache.put(jUrl, jr.clone()); champ=(await jr.json()).data[id]; }
+          }catch(_){}
+          const urls=[modelURL(id,patch)];
+          if(champ){
+            urls.push(imageURL('passive', champ.passive.image.full, patch));
+            champ.spells.forEach(s=>urls.push(imageURL('spell', s.image.full, patch)));
+          }
+          for(const u of urls){
+            try{
+              if(await cache.match(u)) continue;
+              const r=await fetch(u,{mode:'cors'});
+              if(r.ok) await cache.put(u, r.clone());
+            }catch(_){ failed++; }
+          }
+        }catch(_){ failed++; }
+        done++; set();
+      }
+    }
+    await Promise.all(Array.from({length:6}, worker));
+    if(failed < ids.length*3) localStorage.setItem(WARM_KEY, patch);
+  }catch(_){}
+}
+
+// ================= OFFLINE APP (PWA INSTALL + DOWNLOAD PANEL) =================
+(function initOfflineInstaller(){
+  // Service worker: caches app + champions so the game runs with zero internet
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+  }
+  const d={
+    deferred:null,
+    help:document.getElementById('dl-help'),
+    hint:document.getElementById('dl-hint'),
+    installBtn:document.getElementById('install-btn'),
+    androidBtn:document.getElementById('dl-android-btn'),
+    iosBtn:document.getElementById('dl-ios-btn'),
+    winBtn:document.getElementById('dl-windows-btn')
+  };
+  if(!d.installBtn) return;
+  const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  const platform=()=>{
+    const ua=navigator.userAgent;
+    if(/iphone|ipad|ipod/i.test(ua)) return 'ios';
+    if(/android/i.test(ua)) return 'android';
+    if(/windows/i.test(ua)) return 'windows';
+    return 'windows';
+  };
+  const HELP={
+    android:'<b>Android — Chrome</b>'
+      +'<div class="dl-step">1. Press <b>Install app</b> above (or menu <kbd>⋮</kbd> → <b>Add to Home screen</b> → <b>Install</b>).</div>'
+      +'<div class="dl-step">2. Open it from your home screen once while online — it saves every champion automatically.</div>'
+      +'<div class="dl-step">3. Done ✅ — it now works with <b>zero internet</b>, even in airplane mode.</div>',
+    ios:'<b>iPhone / iPad — Safari</b>'
+      +'<div class="dl-step">1. Open this site in <b>Safari</b> (installing from Chrome does not work on iPhone).</div>'
+      +'<div class="dl-step">2. Tap the <b>Share</b> button (the square with the arrow up).</div>'
+      +'<div class="dl-step">3. Choose <b>Add to Home Screen</b>, then tap <b>Add</b>.</div>'
+      +'<div class="dl-step">4. Open it from the home screen once online — afterwards it runs fully offline.</div>',
+    windows:'<b>Windows — Chrome / Edge</b>'
+      +'<div class="dl-step">1. Click the <b>install icon</b> (screen with a down arrow) at the right end of the address bar — or the browser menu → <b>Install Riftcrafter</b>.</div>'
+      +'<div class="dl-step">2. It opens in its own window and gets an icon in your Start menu / desktop.</div>'
+      +'<div class="dl-step">3. Use it once online, then it works completely offline.</div>'
+  };
+  function showHelp(key){
+    d.help.innerHTML=HELP[key]||HELP.windows;
+    d.help.hidden=false;
+    d.help.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+  function refresh(){
+    if(isStandalone()){
+      d.installBtn.hidden=true;
+      d.hint.textContent='Installed ✓ Riftcrafter now runs offline — open it from your home screen / Start menu.';
+      return;
+    }
+    d.installBtn.hidden=!d.deferred;
+    if(d.deferred) d.hint.textContent='One click and it is installed on this device — then it works offline forever.';
+    else if(platform()==='ios') d.hint.textContent='On iPhone use the Share button in Safari → Add to Home Screen (steps below).';
+  }
+  window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); d.deferred=e; refresh(); });
+  window.addEventListener('appinstalled', ()=>{ d.deferred=null; refresh(); });
+  d.installBtn.addEventListener('click', async ()=>{
+    if(!d.deferred) return;
+    d.deferred.prompt();
+    try{ const {outcome}=await d.deferred.userChoice; if(outcome==='accepted') soundManager.play('complete'); }catch{}
+    d.deferred=null; refresh();
+  });
+  d.androidBtn.addEventListener('click', ()=>showHelp('android'));
+  d.iosBtn.addEventListener('click', ()=>showHelp('ios'));
+  d.winBtn.addEventListener('click', ()=>showHelp('windows'));
+  refresh();
+})();
