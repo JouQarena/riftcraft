@@ -7,6 +7,7 @@
   <style>
     html {
       height: 100%;
+      overflow: hidden;
     }
 
     * {
@@ -697,7 +698,10 @@
     }
 
     function getScreenW() {
-      return window.innerWidth || document.documentElement.clientWidth || 800;
+      const vv = window.visualViewport;
+      const visibleW = vv ? Math.ceil(vv.width * (vv.scale || 1)) : Infinity;
+      return Math.min(window.innerWidth || document.documentElement.clientWidth || 800, visibleW) ||
+        document.documentElement.clientWidth || 800;
     }
 
     function getScreenH() {
@@ -1118,6 +1122,7 @@
 
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onResize);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", onResize);
     window.addEventListener("load", onResize);
     if (window.ResizeObserver) new ResizeObserver(onResize).observe(controlsBar);
 
