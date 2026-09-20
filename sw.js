@@ -1,4 +1,4 @@
-// sw.js — Riftcrafter offline service worker  [first-visit interactive guides 20260920c]
+// sw.js — Riftcrafter offline service worker  [full roll audio playback 20260920d]
 // Once something is downloaded it stays saved: images are served from the
 // device cache. Legacy opaque entries are repaired on demand for CORS images.
 // Cache names are stable on purpose — updating the site must not wipe saved art.

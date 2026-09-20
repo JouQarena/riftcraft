@@ -1,4 +1,4 @@
-// Champion Roll only. Decode the clip once and use its actual duration per roll.
+// Champion Roll only. Start with the roll, then let the full clip finish naturally.
 (() => {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   let context = null;
@@ -36,18 +36,20 @@
   function playIfAllowed() {
     if (!context || context.state !== 'running' || !buffer || source || rollStartedAt === null) return;
     // If the user unlocks audio during the first auto-roll, join at its current
-    // position rather than starting a late clip that outlasts the animation.
+    // position rather than restarting the clip late.
     const offset = Math.max(0, (performance.now() - rollStartedAt) / 1000);
-    if (offset >= buffer.duration) return;
+    const remaining = buffer.duration - offset;
+    if (remaining <= 0) return;
     const next = context.createBufferSource();
     next.buffer = buffer;
     next.connect(context.destination);
     source = next;
     next.onended = () => {
       next.disconnect();
-      if (source === next) source = null;
+      if (source === next) { source = null; rollStartedAt = null; }
     };
-    next.start(0, offset);
+    // Do not truncate to the animation length: the remaining clip plays at normal pitch.
+    next.start(0, offset, remaining);
   }
 
   function unlock() {
@@ -64,7 +66,7 @@
   window.RiftRollSound = {
     ready,
     get loaded() { return loaded; },
-    durationMs(fallback = 2000) { return buffer ? buffer.duration * 1000 : fallback; },
+    durationMs() { return 2500; },
     start() {
       stop();
       rollStartedAt = performance.now();
