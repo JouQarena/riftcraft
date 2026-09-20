@@ -957,17 +957,17 @@ boot();
   const HELP={
     android:'<b>Android — Chrome</b>'
       +'<div class="dl-step">1. Press <b>Install app</b> above (or menu <kbd>⋮</kbd> → <b>Add to Home screen</b> → <b>Install</b>).</div>'
-      +'<div class="dl-step">2. Open it from your home screen once while online — it saves every champion automatically.</div>'
-      +'<div class="dl-step">3. Done ✅ — it now works with <b>zero internet</b>, even in airplane mode.</div>',
+      +'<div class="dl-step">2. Use <b>Download for offline</b> below to save the game files and champion artwork.</div>'
+      +'<div class="dl-step">3. Wait for <b>Ready offline</b> before disconnecting. Your browser must keep the saved files.</div>',
     ios:'<b>iPhone / iPad — Safari</b>'
       +'<div class="dl-step">1. Open this site in <b>Safari</b> (installing from Chrome does not work on iPhone).</div>'
       +'<div class="dl-step">2. Tap the <b>Share</b> button (the square with the arrow up).</div>'
       +'<div class="dl-step">3. Choose <b>Add to Home Screen</b>, then tap <b>Add</b>.</div>'
-      +'<div class="dl-step">4. Open it from the home screen once online — afterwards it runs fully offline.</div>',
+      +'<div class="dl-step">4. Open it from the home screen online, then download the offline files below and wait for <b>Ready offline</b>.</div>',
     windows:'<b>Windows — Chrome / Edge</b>'
       +'<div class="dl-step">1. Click the <b>install icon</b> (screen with a down arrow) at the right end of the address bar — or the browser menu → <b>Install Riftcrafter</b>.</div>'
       +'<div class="dl-step">2. It opens in its own window and gets an icon in your Start menu / desktop.</div>'
-      +'<div class="dl-step">3. Use it once online, then it works completely offline.</div>'
+      +'<div class="dl-step">3. Download the offline files below and wait for <b>Ready offline</b> before disconnecting.</div>'
   };
   function showHelp(key){
     d.help.innerHTML=HELP[key]||HELP.windows;
@@ -977,12 +977,12 @@ boot();
   function refresh(){
     if(d.installed||isStandalone()){
       d.installBtn.hidden=true;
-      d.hint.textContent='Installed ✓ Riftcrafter now runs offline — open it from your home screen / Start menu.';
+      d.hint.textContent='Installed ✓ Use the offline download below to prepare this device before disconnecting.';
       return;
     }
     d.installBtn.hidden=false;
     d.hint.textContent = d.deferred
-      ? 'One click and it is installed on this device — then it works offline forever.'
+      ? 'Install the app on this device, then use Download for offline below to prepare the game files.'
       : platform()==='ios'
         ? 'On iPhone use the Share button in Safari → Add to Home Screen (steps below).'
         : 'If one-click install doesn’t pop up here, use your browser menu → “Install app” / “Add to Home screen” (steps below).';

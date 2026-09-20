@@ -30,6 +30,8 @@
   <script defer src="js/page-switcher.js?v=20260919a"></script>
   <link rel="stylesheet" href="css/guide.css?v=20260920a">
   <script defer src="js/guide.js?v=20260920b"></script>
+  <link rel="stylesheet" href="css/offline.css?v=20260920a">
+  <script defer src="js/offline.js?v=20260920a"></script>
 </head>
 <body class="rift-page--draft">
   <nav class="rift-island" aria-label="Game pages">
@@ -175,7 +177,7 @@
 
   <section id="download-panel" aria-label="Download Riftcrafter">
     <h3>Download — Play Offline</h3>
-    <p id="dl-hint">Install Riftcrafter as a real app on Android, iPhone/iPad, or Windows — after the first online visit it runs with no internet at all.</p>
+    <p id="dl-hint">Install Riftcrafter on your device, then download the offline files below. Wait for Ready offline before disconnecting.</p>
     <div class="dl-buttons">
       <button id="install-btn" type="button" class="button button-gold" hidden><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg><span>Install app</span></button>
       <button id="dl-android-btn" type="button" class="button button-cyan"><svg class="icon" aria-hidden="true"><use href="#icon-android"/></svg><span>Android</span></button>
@@ -183,7 +185,18 @@
       <button id="dl-windows-btn" type="button" class="button button-cyan"><svg class="icon" aria-hidden="true"><use href="#icon-windows"/></svg><span>Windows</span></button>
     </div>
     <div id="dl-help" hidden></div>
-    <p id="dl-offline-badge">Works offline — airplane mode friendly</p>
+    <div id="offline-download" data-state="checking" aria-label="Offline file download">
+      <div class="offline-heading"><h4 id="offline-progress-label">Prepare for offline play</h4><span id="offline-percent" aria-hidden="true">—</span></div>
+      <progress id="offline-progress" max="100" aria-labelledby="offline-progress-label" aria-describedby="offline-status"></progress>
+      <p id="offline-status" role="status" aria-live="polite">Checking offline support…</p>
+      <p id="offline-details">Save both pages and every champion for one patch. No bulk download starts until you choose it.</p>
+      <div class="offline-actions">
+        <button id="offline-start" type="button" class="button button-gold" disabled><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg><span>Download for offline</span></button>
+        <button id="offline-pause" type="button" class="button button-outline" hidden>Pause</button>
+      </div>
+      <p class="offline-note">Progress counts files, not bytes. Keep this page open while downloading. Paused downloads reuse saved files.</p>
+    </div>
+    <p id="dl-offline-badge" data-ready="false">Offline files not verified</p>
   </section>
   <footer>
     <p>A fan-made draft. Not an in-game mode or an official Riot Games product.</p>
@@ -197,6 +210,6 @@
   <div class="tip-desc"></div>
 </div>
 
-<script type="module" src="js/app.js?v=20260920-artwork1"></script>
+<script type="module" src="js/app.js?v=20260920-offline1"></script>
 </body>
 </html>

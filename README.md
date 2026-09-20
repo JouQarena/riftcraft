@@ -146,18 +146,43 @@ The download panel on **Riftcrafter** supports installing the site as a progress
 
 Installation is browser-managed; these buttons do not download an APK or Windows EXE. The installed app starts on Riftcrafter and can navigate to Champion Roll through the floating switch.
 
-### What Is Available Offline?
+### Manual Offline Download and Progress
 
-`sw.js` caches the app shell, both pages, shared guides and supporting assets. It keeps the two HTML pages separate so one cannot replace the other in the offline cache.
+The **Download — Play Offline** panel on the first page includes an explicit **Download for offline** button. Installing the PWA alone does **not** mean its champion resources are ready offline.
 
-- **Riftcrafter:** Riot Data Dragon champion data and artwork are cached as they are requested. Offline use is limited to resources already saved on that device; one online visit does **not** guarantee that every champion and ability image has been downloaded.
-- **Champion Roll:** its embedded champion/ability/model assets travel with the cached HTML page. Its scripts and optional roll audio must also be saved for offline use.
-- **Guides:** work offline once their CSS and JavaScript have been cached.
-- The custom `rollsond.mp3` is revalidated online, with a cached copy used offline when available.
+1. Open the site online and click **Download for offline**. Use Wi-Fi if you have a limited data plan.
+2. The app prepares a list of all champions and their required files for one Data Dragon patch.
+3. Follow the progress bar, percentage and **saved / total files** count. The total is calculated from the actual patch, not a hard-coded timer. Preparing the list is shown separately before a total is known.
+4. Wait for **Ready offline** and the green bar. Readiness appears only after all required files are checked in browser storage.
+5. You can then reload offline and play with that saved patch. Shared builds from other patches may still need an internet connection.
 
-Artwork previews and exported images use compatible CORS requests. Old opaque image-cache entries are repaired on demand when online, without clearing valid saved artwork.
+The bulk champion download starts **only after you choose it**. Normal gameplay requests and the existing service-worker app-shell cache still operate as usual.
 
-> Use HTTPS in production, or `localhost` for development. Opening the files directly with `file://` does not provide a supported module/service-worker environment. Browsers may clear cached data, so offline availability is not permanent storage.
+- **Pause / Resume download:** keeps valid saved files and only fetches missing or invalid resources on retry.
+- **Interrupted connection, page changes or reloads:** stop the active transfer. Return to this panel and resume; keep the page open while downloading.
+- **Failed requests, broken artwork or full storage:** show a not-ready state rather than a false success. A successful HTTP request alone does not count as a saved file; cache writes must succeed, and artwork is decoded for validation.
+- **Check for updates:** after completion, you can prepare the current patch. Files that are already valid in the cache are reused.
+- **Automatic verification:** reopening the first page checks the saved pack without automatically starting another bulk download. Missing or evicted files revoke the ready state on verification.
+- **Optional arena sound:** `sounds/rollsond.mp3` is saved if available. If it is missing, the panel explicitly says that Champion Roll will be silent offline. It does not prevent the otherwise complete game pack from becoming ready.
+
+Progress is measured in **files, not bytes**: a large embedded HTML page and a small icon each count as one file, so percentage changes are not a download-speed estimate. The app requests persistent browser storage where supported, but the browser may refuse or later remove data.
+
+### What Is Saved?
+
+`sw.js` and `js/offline.js` share the app-shell configuration. A complete offline pack includes:
+
+- Both HTML pages, their versioned scripts/styles, interactive guides, the HUD frame, app manifest/icons and original sound effects.
+- The selected patch’s roster and every champion’s detail JSON.
+- Every champion portrait, passive icon and four ability icons required by the original draft.
+- Champion Roll’s embedded artwork, plus its optional custom audio when available.
+
+The pages have separate cache entries, so the arena HTML cannot replace the original draft. When the version endpoint is unreachable, the service worker selects a completed downloaded patch instead of a newer patch with only some files cached. While downloading an update, a previously completed patch can remain the offline fallback.
+
+Without a completed manual pack, Riftcrafter can only use data and artwork already cached by ordinary play. One online visit does **not** automatically download every champion. The custom `rollsond.mp3` is revalidated online and uses its cached copy offline when available.
+
+Artwork previews and exported images use compatible CORS requests. Old opaque or invalid artwork entries can be repaired online without clearing valid saved files. Offline pack metadata is stored in the app cache at `./.rift-offline-pack.json`; it is an internal cache entry, **not** a file to upload.
+
+> Use HTTPS in production, or `localhost` for development. Opening files directly with `file://` does not provide a supported module/service-worker environment. Ready status applies to this browser/profile and its current saved resources, not permanent or cross-device storage.
 
 ## Project Structure
 
@@ -170,6 +195,7 @@ css/
   style.css                 Original draft styles
   page-switcher.css         Shared floating page navigation
   guide.css                 Spotlight, arrow, guide card and help button
+  offline.css               Manual offline-download panel and progress bar
 js/
   app.js                    Original draft logic and install panel
   randomizer.js             Balanced draft randomizer
@@ -180,6 +206,7 @@ js/
   page-switcher.js          Navigation behavior and roll-page SW registration
   roll-sound.js             Champion Roll's full-clip audio player
   guide.js                  Independent first-visit interactive guides
+  offline.js                Pack discovery, manual download, resume and verification
 sounds/
   roll, pick, complete,     Original page sound assets (MP3/WAV as listed above)
   replay, share, remove
@@ -223,7 +250,7 @@ For an incremental update, extract the update ZIP and replace its files at their
 
 After deployment, revisit the site online so the service worker can update, then reload. On Windows desktop, **Ctrl + F5** can help load the latest document. Avoid clearing all site data unless necessary: doing so also removes local history, guide visit flags and offline resources.
 
-**When editing cached assets:** update the relevant HTML resource query/version and update `sw.js` so the app-shell cache is refreshed. Do not change stable cache names merely to force an update; they retain saved artwork. Add any new required local files to `APP_SHELL`.
+**When editing cached assets:** update the relevant HTML resource query/version and update `sw.js` so the app-shell cache is refreshed. Do not change stable cache names merely to force an update; they retain saved artwork. Add any new required local files to `APP_SHELL` and increment `OFFLINE_BUILD` when the offline file set changes. The manual downloader obtains that list from the active service worker and also includes the exact versioned resource URLs from both HTML pages.
 
 Share links are based on the current site URL, so custom domains work without hard-coded link changes.
 
@@ -241,7 +268,8 @@ Share links are based on the current site URL, so custom domains work without ha
 | Arena roll timing | `champion-roll.html` → `DEFAULT_DURATION_MS` (2500 ms); independent of the audio file’s duration |
 | Arena audio recording | `sounds/rollsond.mp3` |
 | Install metadata and app icons | `public/manifest.webmanifest` |
-| Offline asset list and caching | `sw.js` |
+| Offline download UI and pack verification | `css/offline.css`, `js/offline.js` |
+| Offline asset list, pack revision and caching | `sw.js` → `APP_SHELL`, `OFFLINE_BUILD` |
 
 If changing `public/frame.webp`, update the original HUD geometry and display aspect ratio together. Preserve the frame’s transparent cutouts.
 
@@ -257,7 +285,8 @@ Do not clear unrelated storage keys just to replay a guide.
 ## Troubleshooting and Current Limitations
 
 - **No sound on the first automatic roll:** interact with the page to unlock browser audio. For Champion Roll, verify that `sounds/rollsond.mp3` is uploaded with the exact spelling and casing.
-- **Artwork warning or letter placeholders:** go online and reload to allow failed or incompatible cached artwork to be fetched again. Offline images that were never downloaded cannot be displayed.
+- **Artwork warning or letter placeholders:** go online and use **Download for offline / Resume download** to save or repair the required artwork. Wait for **Ready offline** before disconnecting.
+- **Offline download is paused or not ready:** check connectivity and available device storage, then resume. A missing required file blocks readiness; the optional Champion Roll sound is reported separately.
 - **An older version still appears:** confirm GitHub Pages finished deploying, revisit online and reload after the service-worker update. Ensure the required helper files were uploaded too.
 - **Guide does not open automatically:** it may already be marked as seen. Use **?**, or reset only the two guide keys for testing.
 - **A practice step cannot be completed:** use **Skip this step** or **Skip guide**; unavailable data or audio should not trap the user in the walkthrough.

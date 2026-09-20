@@ -1,0 +1,31 @@
+/* Manual offline download controls, scoped to the existing download panel. */
+#offline-download {
+  margin-top: 16px; padding: 16px; text-align: left;
+  background: #050e1b; border: 1px solid #29394b; border-radius: 10px;
+}
+#offline-download .offline-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+#offline-download h4 { margin: 0; color: #f0e6d2; font-size: 13px; font-weight: 650; }
+#offline-percent { color: #c8aa6e; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#offline-progress { display: block; width: 100%; height: 9px; margin: 12px 0 9px; border: 0; border-radius: 10px; overflow: hidden; background: #192637; accent-color: #c8aa6e; }
+#offline-progress::-webkit-progress-bar { background: #192637; border-radius: 10px; }
+#offline-progress::-webkit-progress-value { background: linear-gradient(90deg, #967442, #dfc38b); border-radius: 10px; }
+#offline-progress::-moz-progress-bar { background: #c8aa6e; border-radius: 10px; }
+#offline-download[data-state="ready"] #offline-progress { accent-color: #65cbb1; }
+#offline-download[data-state="ready"] #offline-progress::-webkit-progress-value { background: linear-gradient(90deg, #28866e, #65cbb1); }
+#offline-download[data-state="ready"] #offline-progress::-moz-progress-bar { background: #65cbb1; }
+#offline-download[data-state="ready"] #offline-percent { color: #80dbc3; }
+#offline-download[data-state="error"] #offline-status { color: #e2b476; }
+#offline-status { margin: 0; color: #b8c6d4; font-size: 12px; line-height: 1.5; }
+#offline-details { margin: 7px 0 0; color: #8195aa; font-size: 11px; line-height: 1.6; }
+#offline-download .offline-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 13px; }
+#offline-download .button { min-height: 42px; padding: 10px 13px; font-size: 12px; }
+#offline-download .offline-note { margin: 10px 0 0; color: #6f839a; font-size: 10px; line-height: 1.6; }
+#dl-offline-badge[data-ready="false"] { color: #8498ac; }
+#dl-offline-badge[data-ready="false"]::before { color: #7d8b9c; }
+#dl-offline-badge[data-ready="true"] { color: #80dbc3; }
+#dl-offline-badge[data-ready="true"]::before { color: #65cbb1; }
+@media (max-width: 420px) {
+  #offline-download { padding: 13px; }
+  #offline-download .offline-actions .button:first-child { flex: 1; }
+}
+#offline-download .button span { white-space: nowrap; }
