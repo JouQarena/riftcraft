@@ -1,4 +1,4 @@
-// sw.js — Riftcrafter offline service worker  [CORS artwork cache repair 20260920]
+// sw.js — Riftcrafter offline service worker  [automatic roll audio duration 20260920]
 // Once something is downloaded it stays saved: images are served from the
 // device cache. Legacy opaque entries are repaired on demand for CORS images.
 // Cache names are stable on purpose — updating the site must not wipe saved art.
@@ -9,6 +9,7 @@ const DATA_CACHE = 'riftcrafter-data-v1';
 const APP_SHELL = [
   './', './index.html', './champion-roll.html',
   './css/page-switcher.css', './js/page-switcher.js',
+  './js/roll-sound.js', './sounds/rollsond.mp3',
   './css/style.css',
   './js/app.js', './js/storage.js', './js/share.js', './js/hud.js', './js/sounds.js', './js/randomizer.js',
   './public/frame.webp',
@@ -90,6 +91,24 @@ self.addEventListener('fetch', (event) => {
   // App files (same origin): exact cache-first (new ?v= URLs = fresh download,
   // old ones stay for offline fallback)
   if (url.origin === location.origin) {
+    // Revalidate this user-supplied clip so replacing it also updates roll timing.
+    // Keep the last valid copy available offline; never cache a missing-file page.
+    if (url.pathname === new URL('./sounds/rollsond.mp3', self.registration.scope).pathname) {
+      event.respondWith((async () => {
+        const cache = await caches.open(APP_CACHE);
+        try {
+          const response = await fetch(new Request(request, { cache: 'no-cache' }));
+          if (response.ok) {
+            await cache.put(request, response.clone()).catch(() => {});
+            return response;
+          }
+          return (await cache.match(request, { ignoreSearch: true })) || response;
+        } catch {
+          return (await cache.match(request, { ignoreSearch: true })) || Response.error();
+        }
+      })());
+      return;
+    }
     if (request.mode === 'navigate') {
       event.respondWith((async () => {
         try {
